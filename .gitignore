@@ -1,0 +1,11 @@
+.venv/
+_nuitka/
+_work/
+models/
+__pycache__/
+*.pyc
+*.exe
+*.zip
+*.log
+*_逐字稿*
+*_transcript*
