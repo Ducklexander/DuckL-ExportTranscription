@@ -47,7 +47,7 @@ STRINGS = {
         "gpu_missing": "偵測到 NVIDIA 顯卡，安裝 GPU 加速可快約 5 倍",
         "gpu_install": "安裝 GPU 加速（約 540 MB）",
         "gpu_confirm": "要下載並安裝 GPU 加速嗎？\n\n"
-                       "會從 GitHub 下載 NVIDIA cuBLAS（約 540 MB），"
+                       "會從 NVIDIA 官方網站下載 cuBLAS（約 540 MB），"
                        "放進程式資料夾。完成後程式會自動重新開啟。",
         "gpu_dl": "下載 GPU 加速 {a} / {b} MB",
         "gpu_done": "GPU 加速安裝完成，程式將重新開啟。",
@@ -91,7 +91,7 @@ STRINGS = {
         "gpu_missing": "NVIDIA GPU found. GPU acceleration makes it about 5x faster",
         "gpu_install": "Install GPU acceleration (about 540 MB)",
         "gpu_confirm": "Download and install GPU acceleration?\n\n"
-                       "This downloads NVIDIA cuBLAS (about 540 MB) from GitHub into the "
+                       "This downloads NVIDIA cuBLAS (about 540 MB) from NVIDIA into the "
                        "program folder. The program restarts when it is done.",
         "gpu_dl": "Downloading GPU acceleration {a} / {b} MB",
         "gpu_done": "GPU acceleration installed. The program will restart.",

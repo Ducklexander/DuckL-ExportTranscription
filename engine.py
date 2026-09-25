@@ -67,75 +67,57 @@ def gpu_state(app=None):
 
 
 GPU_DLLS = ("cublas64_12.dll", "cublasLt64_12.dll")
-GPU_PACK_URL = ("https://github.com/Ducklexander/DuckL-ExportTranscription/"
-                "releases/latest/download/DuckL-ExportTranscription_GPU.zip")
+# 先從 NVIDIA 官方 CDN 下載（快），失敗再用 GitHub Release 上的備份
+GPU_PACK_URLS = (
+    "https://developer.download.nvidia.com/compute/cuda/redist/libcublas/windows-x86_64/"
+    "libcublas-windows-x86_64-12.8.4.1-archive.zip",
+    "https://github.com/Ducklexander/DuckL-ExportTranscription/"
+    "releases/latest/download/DuckL-ExportTranscription_GPU.zip",
+)
 
 
-def install_gpu(progress=None, cancel=None, url=GPU_PACK_URL, app=None):
-    """下載 GPU 加速包（cuBLAS）並解壓到程式資料夾。progress(已下載, 總大小)。"""
+def install_gpu(progress=None, cancel=None, urls=GPU_PACK_URLS, app=None):
+    """下載 cuBLAS 並把需要的 DLL 解壓到程式資料夾。progress(已下載, 總大小)。"""
     import urllib.request, zipfile, shutil
     d = app or app_dir()
     tmp = os.path.join(d, "_gpu_download.zip")
+    err = None
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": "DuckL-ExportTranscription"})
-        with urllib.request.urlopen(req, timeout=60) as r, open(tmp, "wb") as f:
-            total = int(r.headers.get("Content-Length") or 0)
-            got = 0
-            while True:
-                if cancel and cancel.is_set():
-                    raise Cancelled()
-                b = r.read(1 << 20)
-                if not b:
-                    break
-                f.write(b)
-                got += len(b)
-                if progress:
-                    progress(got, total)
-        with zipfile.ZipFile(tmp) as z:
-            for info in z.infolist():
-                name = os.path.basename(info.filename)
-                if name.lower().endswith(".dll"):
-                    with z.open(info) as src, open(os.path.join(d, name), "wb") as dst:
-                        shutil.copyfileobj(src, dst, 1 << 20)
+        for url in urls:
+            try:
+                req = urllib.request.Request(url, headers={"User-Agent": "DuckL-ExportTranscription"})
+                with urllib.request.urlopen(req, timeout=60) as r, open(tmp, "wb") as f:
+                    total = int(r.headers.get("Content-Length") or 0)
+                    got = 0
+                    while True:
+                        if cancel and cancel.is_set():
+                            raise Cancelled()
+                        b = r.read(1 << 20)
+                        if not b:
+                            break
+                        f.write(b)
+                        got += len(b)
+                        if progress:
+                            progress(got, total)
+                with zipfile.ZipFile(tmp) as z:
+                    members = [i for i in z.infolist()
+                               if os.path.basename(i.filename) in GPU_DLLS]
+                    if len(members) < len(GPU_DLLS):
+                        raise RuntimeError("cuBLAS DLL not found in download")
+                    for info in members:
+                        with z.open(info) as src,                                 open(os.path.join(d, os.path.basename(info.filename)), "wb") as dst:
+                            shutil.copyfileobj(src, dst, 1 << 20)
+                return
+            except Cancelled:
+                raise
+            except Exception as e:          # 換下一個來源
+                err = e
+        raise err
     finally:
         try:
             os.remove(tmp)
         except OSError:
             pass
-
-
-def app_dir():
-    if getattr(sys, "frozen", False) or "__compiled__" in globals():
-        return os.path.dirname(os.path.abspath(sys.argv[0]))
-    return os.path.dirname(os.path.abspath(__file__))
-
-
-def find_models(base=None):
-    """回傳各模型路徑；找不到就丟出清楚的錯誤。"""
-    base = base or os.path.join(app_dir(), "models")
-    m = {
-        "asr": os.path.join(base, "asr"),
-        "seg": os.path.join(base, "diarization", "segmentation.onnx"),
-        "spk": os.path.join(base, "diarization", "speaker.onnx"),
-        "punct": os.path.join(base, "punct", "model.int8.onnx"),
-    }
-    missing = [p for k, p in m.items()
-               if not os.path.exists(os.path.join(p, "model.bin") if k == "asr" else p)]
-    if missing:
-        raise FileNotFoundError("找不到模型檔 / model files missing:\n" + "\n".join(missing))
-    return m
-
-
-def default_threads():
-    n = os.cpu_count() or 4
-    return max(2, min(8, n // 2 if n >= 8 else n))
-
-
-# ------------------------------------------------------------------ 解碼
-def load_audio(path):
-    from faster_whisper.audio import decode_audio
-    a = decode_audio(path, sampling_rate=SR)
-    return np.ascontiguousarray(a, dtype=np.float32)
 
 
 # ------------------------------------------------------------------ 說話人

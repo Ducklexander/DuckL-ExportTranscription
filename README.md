@@ -16,8 +16,9 @@ From the [latest release](../../releases/latest):
 | `DuckL-ExportTranscription_GPU.zip` | Optional, NVIDIA cuBLAS. You normally do not need to download this by hand |
 
 That is the whole setup: unzip, run. On a PC with an NVIDIA card the window shows
-an "Install GPU acceleration" button that downloads the GPU zip from this release,
-puts it in place and restarts, for about 5x speed. For an offline PC, download the
+an "Install GPU acceleration" button. It downloads NVIDIA cuBLAS (from NVIDIA's
+own server, falling back to the GPU zip in this release), puts it in place and
+restarts, for about 5x speed. It took under a minute here. For an offline PC, download the
 GPU zip yourself and unzip it to the same place as the main zip.
 
 The build is unsigned, so SmartScreen may warn on first run: choose "More info"
