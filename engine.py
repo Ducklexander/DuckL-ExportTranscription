@@ -105,7 +105,8 @@ def install_gpu(progress=None, cancel=None, urls=GPU_PACK_URLS, app=None):
                     if len(members) < len(GPU_DLLS):
                         raise RuntimeError("cuBLAS DLL not found in download")
                     for info in members:
-                        with z.open(info) as src,                                 open(os.path.join(d, os.path.basename(info.filename)), "wb") as dst:
+                        out = os.path.join(d, os.path.basename(info.filename))
+                        with z.open(info) as src, open(out, "wb") as dst:
                             shutil.copyfileobj(src, dst, 1 << 20)
                 return
             except Cancelled:
@@ -118,6 +119,40 @@ def install_gpu(progress=None, cancel=None, urls=GPU_PACK_URLS, app=None):
             os.remove(tmp)
         except OSError:
             pass
+
+
+def app_dir():
+    if getattr(sys, "frozen", False) or "__compiled__" in globals():
+        return os.path.dirname(os.path.abspath(sys.argv[0]))
+    return os.path.dirname(os.path.abspath(__file__))
+
+
+def find_models(base=None):
+    """回傳各模型路徑；找不到就丟出清楚的錯誤。"""
+    base = base or os.path.join(app_dir(), "models")
+    m = {
+        "asr": os.path.join(base, "asr"),
+        "seg": os.path.join(base, "diarization", "segmentation.onnx"),
+        "spk": os.path.join(base, "diarization", "speaker.onnx"),
+        "punct": os.path.join(base, "punct", "model.int8.onnx"),
+    }
+    missing = [p for k, p in m.items()
+               if not os.path.exists(os.path.join(p, "model.bin") if k == "asr" else p)]
+    if missing:
+        raise FileNotFoundError("找不到模型檔 / model files missing:\n" + "\n".join(missing))
+    return m
+
+
+def default_threads():
+    n = os.cpu_count() or 4
+    return max(2, min(8, n // 2 if n >= 8 else n))
+
+
+# ------------------------------------------------------------------ 解碼
+def load_audio(path):
+    from faster_whisper.audio import decode_audio
+    a = decode_audio(path, sampling_rate=SR)
+    return np.ascontiguousarray(a, dtype=np.float32)
 
 
 # ------------------------------------------------------------------ 說話人

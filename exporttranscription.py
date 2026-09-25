@@ -645,7 +645,36 @@ def cli(argv):
     return rc
 
 
+def cli_install_gpu():
+    """--install-gpu：不開視窗直接安裝 GPU 加速，結果寫到程式資料夾的 install-gpu.log。"""
+    import engine
+    msg = []
+    try:
+        st = engine.gpu_state()
+        if st == "none":
+            msg.append("No NVIDIA GPU found / 沒有偵測到 NVIDIA 顯卡")
+            rc = 1
+        elif st == "ok":
+            msg.append("Already installed / 已經安裝")
+            rc = 0
+        else:
+            engine.install_gpu()
+            msg.append("Installed / 安裝完成")
+            rc = 0
+    except Exception:
+        msg.append(traceback.format_exc())
+        rc = 1
+    try:
+        with open(os.path.join(engine.app_dir(), "install-gpu.log"), "w", encoding="utf-8") as f:
+            f.write("\n".join(msg))
+    except Exception:
+        pass
+    return rc
+
+
 if __name__ == "__main__":
+    if "--install-gpu" in sys.argv:
+        sys.exit(cli_install_gpu())
     if "--cli" in sys.argv:
         a = list(sys.argv[1:])
         a.remove("--cli")

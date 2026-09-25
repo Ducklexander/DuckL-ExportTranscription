@@ -68,6 +68,7 @@ Command line, for batch use:
 ```
 DuckL-ExportTranscription.exe --cli talk.mp4 --speakers 2 --hotwords "蘭陵王,Unity"
 DuckL-ExportTranscription.exe --cli talk.mp4 --lang en --ui en
+DuckL-ExportTranscription.exe --install-gpu      (GPU acceleration without the window)
 ```
 
 There is no console, so messages go to a `.log` next to the output.
