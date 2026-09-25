@@ -9,3 +9,4 @@ __pycache__/
 *.log
 *_逐字稿*
 *_transcript*
+*.dll
